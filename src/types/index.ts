@@ -9,7 +9,14 @@ export interface Profile {
   id: string
   full_name: string | null
   phone: string | null
+  role: UserRole
   created_at: string
+}
+
+export interface ProfileWithStats extends Profile {
+  orders?: Order[]
+  totalOrders: number
+  totalSpent: number
 }
 
 export interface Address {

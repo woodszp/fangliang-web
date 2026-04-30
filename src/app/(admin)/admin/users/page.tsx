@@ -27,13 +27,14 @@ import {
 import * as XLSX from 'xlsx'
 import { Search, FileDown, Package, Users } from 'lucide-react'
 import { toast } from 'sonner'
+import type { Order, ProfileWithStats, UserRole } from '@/types'
 
 export default function AdminUsersPage() {
   const supabase = createClient()
   const router = useRouter()
   const { role } = useAuthStore()
 
-  const [users, setUsers] = useState<any[]>([])
+  const [users, setUsers] = useState<ProfileWithStats[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -54,7 +55,7 @@ export default function AdminUsersPage() {
         const usersWithStats = data.map(user => ({
           ...user,
           totalOrders: user.orders?.length || 0,
-          totalSpent: user.orders?.reduce((sum: number, o: any) => sum + Number(o.total_amount), 0) || 0,
+          totalSpent: user.orders?.reduce((sum: number, o: Order) => sum + Number(o.total_amount), 0) || 0,
         }))
         setUsers(usersWithStats)
       }
@@ -64,7 +65,7 @@ export default function AdminUsersPage() {
     fetchUsers()
   }, [supabase, role, router])
 
-  const handleUpdateRole = async (userId: string, newRole: string) => {
+  const handleUpdateRole = async (userId: string, newRole: UserRole) => {
     const { error } = await supabase
       .from('profiles')
       .update({ role: newRole })
@@ -211,7 +212,7 @@ export default function AdminUsersPage() {
                     <TableCell>{user.full_name || '-'}</TableCell>
                     <TableCell>{user.phone || '-'}</TableCell>
                     <TableCell>
-                      <Select value={user.role} onValueChange={(v) => handleUpdateRole(user.id, v)}>
+                      <Select value={user.role} onValueChange={(v) => handleUpdateRole(user.id, v as UserRole)}>
                         <SelectTrigger className="w-[100px]">
                           <Badge variant={user.role === 'admin' ? 'default' : 'outline'}>
                             {user.role === 'admin' ? '管理员' : '用户'}

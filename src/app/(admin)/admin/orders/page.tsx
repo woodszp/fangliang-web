@@ -21,6 +21,7 @@ import {
 import * as XLSX from 'xlsx'
 import { Search, FileDown, Package, ShoppingBag, Users } from 'lucide-react'
 import { toast } from 'sonner'
+import type { Order, OrderItem } from '@/types'
 
 const statusMap = {
   pending: { label: '待确认', color: 'bg-yellow-500' },
@@ -35,7 +36,7 @@ export default function AdminOrdersPage() {
   const router = useRouter()
   const { role } = useAuthStore()
 
-  const [orders, setOrders] = useState<any[]>([])
+  const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -59,7 +60,7 @@ export default function AdminOrdersPage() {
     fetchOrders()
   }, [supabase, role, router])
 
-  const handleUpdateStatus = async (orderId: string, status: string) => {
+  const handleUpdateStatus = async (orderId: string, status: Order['status']) => {
     const { error } = await supabase
       .from('orders')
       .update({ status })
@@ -78,7 +79,7 @@ export default function AdminOrdersPage() {
       '用户': order.user?.full_name || order.user?.id?.slice(0, 8),
       '联系电话': order.address?.phone || '',
       '收货地址': order.address ? `${order.address.province}${order.address.city}${order.address.district}${order.address.detail_address}` : '',
-      '商品信息': order.items?.map((i: any) => `${i.product?.name} x${i.quantity}`).join('; ') || '',
+      '商品信息': order.items?.map((i: OrderItem) => `${i.product?.name} x${i.quantity}`).join('; ') || '',
       '订单金额': order.total_amount,
       '状态': statusMap[order.status as keyof typeof statusMap]?.label,
       '下单时间': new Date(order.created_at).toLocaleString(),
@@ -189,7 +190,7 @@ export default function AdminOrdersPage() {
                     </TableCell>
                     <TableCell>
                       <div className="max-w-xs">
-                        {order.items?.map((item: any) => (
+                        {order.items?.map((item: OrderItem) => (
                           <p key={item.id} className="text-sm truncate">
                             {item.product?.name} x{item.quantity}
                           </p>
@@ -198,7 +199,7 @@ export default function AdminOrdersPage() {
                     </TableCell>
                     <TableCell className="font-medium">¥{order.total_amount.toFixed(2)}</TableCell>
                     <TableCell>
-                      <Select value={order.status} onValueChange={(v) => v && handleUpdateStatus(order.id, v)}>
+                      <Select value={order.status} onValueChange={(v) => v && handleUpdateStatus(order.id, v as Order['status'])}>
                         <SelectTrigger className="w-[100px]">
                           <Badge className={statusMap[order.status as keyof typeof statusMap].color}>
                             {statusMap[order.status as keyof typeof statusMap].label}

@@ -23,6 +23,7 @@ import {
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import * as XLSX from 'xlsx'
+import type { Order, OrderItem } from '@/types'
 
 const statusMap = {
   pending: { label: '待确认', color: 'bg-yellow-500' },
@@ -46,8 +47,8 @@ export default function AdminPage() {
     todayOrders: 0,
     todayRevenue: 0,
   })
-  const [recentOrders, setRecentOrders] = useState<any[]>([])
-  const [orders, setOrders] = useState<any[]>([])
+  const [recentOrders, setRecentOrders] = useState<Order[]>([])
+  const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -66,16 +67,16 @@ export default function AdminPage() {
         supabase.from('profiles').select('*').eq('role', 'user'),
       ])
 
-      const allOrders = ordersResult.data || []
-      const todayOrders = allOrders.filter((o: any) => o.order_date === today)
+      const allOrders: Order[] = ordersResult.data || []
+      const todayOrders = allOrders.filter((o) => o.order_date === today)
 
       setStats({
         totalOrders: allOrders.length,
-        totalRevenue: allOrders.reduce((sum: number, o: any) => sum + Number(o.total_amount), 0),
+        totalRevenue: allOrders.reduce((sum, o) => sum + Number(o.total_amount), 0),
         totalProducts: (productsResult.data || []).length,
         totalUsers: (usersResult.data || []).length,
         todayOrders: todayOrders.length,
-        todayRevenue: todayOrders.reduce((sum: number, o: any) => sum + Number(o.total_amount), 0),
+        todayRevenue: todayOrders.reduce((sum, o) => sum + Number(o.total_amount), 0),
       })
 
       // Get recent orders
@@ -107,10 +108,10 @@ export default function AdminPage() {
 
   const handleExportTodayOrders = () => {
     const today = new Date().toISOString().split('T')[0]
-    const todayOrders = orders.filter((o: any) => o.order_date === today)
+    const todayOrders = orders.filter((o) => o.order_date === today)
 
-    const exportData = todayOrders.flatMap((order: any) =>
-      (order.items || []).map((item: any) => ({
+    const exportData = todayOrders.flatMap((order) =>
+      (order.items || []).map((item: OrderItem) => ({
         '订单号': order.id.slice(0, 8),
         '下单日期': order.order_date,
         '用户': order.user?.full_name || order.user?.id?.slice(0, 8),
@@ -137,8 +138,8 @@ export default function AdminPage() {
       .eq('id', orderId)
 
     if (!error) {
-      setOrders(orders.map((o: any) => o.id === orderId ? { ...o, status } : o))
-      setRecentOrders(recentOrders.map((o: any) => o.id === orderId ? { ...o, status } : o))
+      setOrders(orders.map((o) => o.id === orderId ? { ...o, status: status as Order['status'] } : o))
+      setRecentOrders(recentOrders.map((o) => o.id === orderId ? { ...o, status: status as Order['status'] } : o))
     }
   }
 
@@ -265,7 +266,7 @@ export default function AdminPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentOrders.map((order: any) => (
+              {recentOrders.map((order) => (
                 <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
                     <p className="font-medium">
